@@ -7,4 +7,7 @@ Apama is a Complex-Event-Processing (CEP) Platform. CEP allows organizations to 
 
 The Apama Event Processing Platform is a complete design and deployment environment for CEP applications. From graphical design tools to research and backtesting utilities, the complex event processing (CEP) platform provides analysts, developers and administrators a full lifecycle design center that is optimized for CEP solutions.
 
+Include a JAVA example that shows/explains how to send events to the Apama correlators, using Java for reading from an Apache log in order to track the user web site interaction, to promote real-time offers among other use cases.
+
 Enjoy it!
+carlesz@yahoo.com

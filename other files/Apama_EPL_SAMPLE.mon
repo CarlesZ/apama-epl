@@ -34,4 +34,42 @@ event UtilizationThreshold {
 	}
 }
 
+// Ejemplo de Streaming
+monitor StreamingTemperatureCalculation {
+	
+	DVEventUtility dvTemperatureKPI     :=  new DVEventUtility;
+
+	
+	action onload() {
+		
+		// Setup a real-time data view for the authorization KPI
+		dvTemperatureKPI.start
+		(
+		   "Temperature KPI", 
+		   TemperatureKPI.getFieldNames(), TemperatureKPI.getFieldTypes(), (new TemperatureKPI).getFieldKeys()
+		 );		
+		TemperatureKPI tempkpi;
+		
+		
+		// Setup a stream to calculate key indicators over the moving window
+		stream<Temperature> tempstream := all Temperature();
+		from temp in tempstream
+		  partition by temp.machinename
+		  within 60.0 every 10.0
+		  group by temp.machinename
+		  select TemperatureKPI(temp.machinename, avg(temp.value), count()):tempkpi {
+			
+			//
+			dvTemperatureKPI.addOrUpdate(tempkpi.getFieldValues());
+			
+			
+		}
+		
+		
+		
+		
+	}
+	
+	
+}
 
