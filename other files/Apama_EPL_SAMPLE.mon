@@ -1,0 +1,37 @@
+Ejemplos EPL Apama
+
+event UtilizationThreshold {
+//	string alert_rule_id; //UT + uniquenumber
+	string customerID;
+	string customerName;
+	string campusID;
+	string campusName;
+	string buildingID;
+	string buildingName;
+	string floorID;
+	string floorName;
+	string zoneID;
+	string zoneName;
+	string assetType;
+	string interval; //hour, day, week, month, year
+	string above_below; //above threshold or below threshold
+	string measure; //numberPages, numberJobs, tonerLevel
+	float measureValue;
+	float metricPercent;
+	
+    action createKey() returns string {
+    	return customerID + "-" + campusID + "-" + buildingID + "-" + floorID + "-" + zoneID + "-" + assetType + "-" + interval + "-" + measure + "-" + above_below;
+    }
+    
+	action getRow( MemStoreUtil util, com.apama.memorystore.Table t ) returns com.apama.memorystore.Row {
+		com.apama.memorystore.Row r := t.get( createKey() );
+		r := util.populateRow( r, self.getFieldNames(), self.getFieldTypes(), self.getFieldValues() );
+		return r;
+	}
+	action findRow( MemStoreUtil util, com.apama.memorystore.Table t ) returns com.apama.memorystore.Row {
+		com.apama.memorystore.Row r := t.get( createKey() );
+		return r;
+	}
+}
+
+
