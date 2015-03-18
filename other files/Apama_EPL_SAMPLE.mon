@@ -73,3 +73,22 @@ monitor StreamingTemperatureCalculation {
 	
 }
 
+package com.apama.lab.oms;
+
+monitor Simulator 
+{
+	action onload()
+	{
+		NewOrder n;
+		on all NewOrder(): n 
+		{
+			on wait (3.0) 
+			{
+				route OrderFinished(n.orderId, n.symbol, n.side, n.type, n.price, n.qty);
+			}
+		}
+	}
+	
+	
+}
+

@@ -1,0 +1,171 @@
+// basic epl tour.mon questions to: @carlesz
+// use case: sensor network monitoring
+
+//1. Event definitions
+/**
+ * Input temperature reading
+ */
+event Temperature {
+	string sensorId;
+	float temperature; 
+}
+
+/**
+ * Input pressure reading
+ */
+event Pressure {
+	string sensorId;
+	float pressure;  
+}
+
+// Hello World
+monitor SensorMonitor {
+
+	Temperature temperature;
+	
+	action onload {
+		// For any incoming Temperature event from sensorId “S001” assign the event to variable 
+		// “temperature” and print the string representation to the console
+
+		on all Temperature (sensorId="S001"):temperature {
+			print temperature.toString();
+		}
+	}
+
+// Event expresions
+monitor SensorMonitor {
+
+	Pressure pressure;
+	Temperature temperature;
+
+	action onload {
+		
+	float meanTemperature:=100.0; 
+	float meanPressure:=800.0;
+		
+	// Temperature high rule
+	on all Temperature (sensorId="S001", temperature >= meanTemperature * 1.10):temperature {
+			print "TEMP_HIGH: " + temperature.toString();
+		}
+		
+	// Pressure high rule
+	on all Pressure (sensorId="S001", pressure >= meanPressure * 1.10):pressure {
+		print "PRESSURE_HIGH: " + pressure.toString();
+		}
+
+	// Temporal rule, temperature high followed by pressure high
+	on all Temperature (sensorId="S001", temperature >= meanTemperature * 1.02):temperature ->  
+		Pressure (sensorId="S001", pressure >= meanPressure * 1.05):pressure within (3.0) {
+		    print "TEMP_PRESSURE_RISE: " + temperature.toString() + " " + pressure.toString();
+   }
+  }
+}
+
+}
+
+// Event Streams and Stream Queries
+event AverageReadings {
+string sensorId;
+float meanTemperature;
+float meanPressure;
+}
+
+// create streams of average temperature and pressure values
+stream<float> meanTemperatures :=
+from t in temperatures within 60.0 
+select mean(t.temperature);
+
+stream<float> meanPressures := 
+from p in pressures within 60.0 
+select mean(p.pressure);
+
+// create a stream combining the two average reading streams into one
+
+AverageReadings averageReadings;
+
+from avgT in meanTemperatures retain 1 
+from avgP in meanPressures retain 1
+select AverageReadings("S001", avgT, avgP): averageReadings 
+{
+print averageReadings.toString();
+}
+
+// Creating multiple monitor instances
+monitor SensorMonitor {
+
+Pressure pressure;
+Temperature temperature;
+AddSensor sensor;
+
+action onload {
+
+// Spawn a monitor instance for each sensor
+on all AddSensor():sensor {
+spawn monitorSensor;
+}
+}
+
+action monitorSensor {
+
+on all Temperature (sensorId=sensor.sensorId, temperature >= sensor.meanTemperature * 1.10):temperature {
+print "TEMP_HIGH: " + temperature.toString();
+}
+
+// …… other listeners for the sensor
+}
+}
+
+//event routing
+on all Temperature (sensorId=sensor.sensorId, temperature >= sensor.meanTemperature * 1.10):temperature {
+route Alert("TEMP_HIGH", sensor.sensorId, temperature.temperature, pressure.pressure);
+}
+
+monitor AlertManager {
+
+ action onload {
+ Alert a;
+ on all Alert(): a { print a.toString(); }
+ }
+}
+
+event Alert  {
+    string type;
+    string sensorId;
+    float temperature;
+    float pressure;
+}
+
+// Sending Events to External Systems, e.g, via the Integrated Adapted Framework 
+on all Temperature (sensorId=sensor.sensorId, temperature >= sensor.meanTemperature * 1.10):temperature {
+route Alert("TEMP_HIGH", sensor.sensorId, temperature.temperature, pressure.pressure);
+}
+monitor AlertManager {
+
+action onload {
+Alert a;
+on all Alert(): a {
+emit a to "AlertChannel";}
+}
+}
+
+//visualization with Apama
+// step 1 - create DataView
+com.apama.dataview.DataViewAddDefinition add := new com.apama.dataview.DataViewAddDefinition;
+add.dvName := "Sensors";
+add.dvDisplayName := "Sensors";
+add.fieldNames := ["sensorId","meanTemperature","meanPressure","temperature","pressure"];
+add.fieldTypes := ["string","float","float","float","float"];
+add.keyFields := ["sensorId"];
+route add;
+// step 2 - send event data to DataView
+on all Temperature (sensorId=sensor.sensorId):temperature or all Pressure(sensorId=sensor.sensorId):pressure {
+com.apama.dataview.DataViewUpdateItem update := new com.apama.dataview.DataViewUpdateItem;
+update.dvName := "Sensors";
+update.timeStamp := currentTime;
+update.dvItemId := -1; // Set the ID to -1 when using keyFields.
+update.fieldValues := [sensor.sensorId,sensor.meanTemperature.toString(),sensor.meanPressure.toString(),
+                       temperature.temperature.toString(),pressure.pressure.toString()];
+route update;
+
+
+
