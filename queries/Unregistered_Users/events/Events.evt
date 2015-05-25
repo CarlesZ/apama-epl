@@ -1,0 +1,53 @@
+#################################################################################################################################################################################
+# $Copyright (c) 2014-2015 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its Subsidiaries and/or its Affiliates and/or their licensors.$
+# Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG
+#################################################################################################################################################################################
+
+
+###########################################################
+# CASE 1: Subscriber has activated a SIM,
+# has transferred more than 10.0 MB of data on 2 days and
+# has not registered a website account after waiting 5 days
+# Expected result: 2 SMS sent to this subscriber
+###########################################################
+&FLUSHING(1)
+&SETTIME(1.0)
+"com.apama.queries", apamax.querysamples.smartphoneusers.SimActivated(11)
+"com.apama.queries", apamax.querysamples.smartphoneusers.DataUsageByDay(11, 15.0)
+"com.apama.queries", apamax.querysamples.smartphoneusers.DataUsageByDay(11, 12.0)
+&TIME(432000) # wait for 5 days
+
+
+###########################################################
+# CASE 2: Another subscriber has activated a SIM,
+# has transferred more than 10.0 MB of data but has
+# already registered a website account after waiting 5 days
+# Expected result: No SMS sent to this subscriber
+###########################################################
+"com.apama.queries", apamax.querysamples.smartphoneusers.SimActivated(22)
+"com.apama.queries", apamax.querysamples.smartphoneusers.DataUsageByDay(22, 12.0)
+"com.apama.queries", apamax.querysamples.smartphoneusers.WebsiteAccountRegistered(22)            
+&TIME(865000) # wait for another 5 days
+
+ 
+###########################################################
+# CASE 3: The same subscriber as above again transfers more 
+# than 10.0 MB and is still registered to the website                                          
+# Expected result: No SMS sent to this subscriber
+###########################################################
+"com.apama.queries", apamax.querysamples.smartphoneusers.DataUsageByDay(22, 20.0)            
+&TIME(1298000) # wait for another 5 days
+                                                                                         
+                                               
+###########################################################
+# CASE 4: Subscriber has activated a SIM,
+# has transferred less than 10.0 MB of data on 1 day and 
+# has not registered a website account after waiting 5 days
+# Expected result: No SMS sent to this subscriber
+###########################################################
+"com.apama.queries", apamax.querysamples.smartphoneusers.SimActivated(44)
+"com.apama.queries", apamax.querysamples.smartphoneusers.DataUsageByDay(44, 8.0)    
+&TIME(1729000) # wait for another 5 days
+                       
+                 
+                       

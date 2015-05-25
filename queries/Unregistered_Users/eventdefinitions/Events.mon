@@ -1,0 +1,41 @@
+/*
+ * $Copyright (c) 2014-2015 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its Subsidiaries and/or its Affiliates and/or their licensors.$
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG
+ */ 
+
+package apamax.querysamples.smartphoneusers; 
+
+/**
+* Denotes a smartphone user who has registered
+* for an account (has an active SIM)
+* 
+*/
+event SimActivated {
+	integer subscriberId;
+}
+
+/**
+* Data usage in MB transferred per day for
+* a particular user
+*/
+event DataUsageByDay {
+	integer subscriberId;
+	float MBTransferred;
+}
+
+/**
+* Subscriber ID for users who have a website
+* account already registered
+*/
+event WebsiteAccountRegistered {
+	integer subscriberId;
+}
+
+/**
+* SMS message being sent to a user
+* 
+*/
+event SMS {
+	integer subscriberId;
+	string message;
+}

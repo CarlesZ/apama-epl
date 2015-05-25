@@ -9,5 +9,7 @@ The Apama Event Processing Platform is a complete design and deployment environm
 
 Include a JAVA example that shows/explains how to send events to the Apama correlators, using Java for reading from an Apache log in order to track the user web site interaction, to promote real-time offers among other use cases.
 
+May-2015: New Apama Queries has been release. Queries offers: Scalable event storage, horizontal processing scalability and a graphical interface for business analyst. 
+
 Enjoy it!
 carlesz@yahoo.com

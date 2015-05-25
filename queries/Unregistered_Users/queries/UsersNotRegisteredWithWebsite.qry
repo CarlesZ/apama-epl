@@ -1,0 +1,39 @@
+//*****************************************************************************
+// Title:         UsersNotRegisteredWithWebsite
+// Description:   UsersNotRegisteredWithWebsite description
+// Dependencies:  None
+// Author:        MESP
+//
+//*****************************************************************************
+
+package apamax.querysamples.smartphoneusers;
+using apamax.querysamples.smartphoneusers.SimActivated;
+using apamax.querysamples.smartphoneusers.DataUsageByDay;
+using apamax.querysamples.smartphoneusers.WebsiteAccountRegistered;
+
+query UsersNotRegisteredWithWebsite {
+	parameters {
+		float MBThreshold;
+	}
+	
+	inputs  {
+		SimActivated() key subscriberId within 7 days;
+		DataUsageByDay() key subscriberId within 7 days;
+		WebsiteAccountRegistered() key subscriberId within 7 days;
+
+	}
+
+	find SimActivated:SIMActive -> DataUsageByDay:dataUsed -> wait(5   days):someTime
+	where dataUsed.MBTransferred > MBThreshold
+	without WebsiteAccountRegistered:w1   {
+
+	
+		%send("eventType":"apamax.querysamples.smartphoneusers.SMS",
+				"title":"Send an SMS event", "description":"",
+				"channel":"\"apamax.querysamples.mobile_sms\"",
+				"fields": {
+					"subscriberId":"subscriberId",
+					"message":"\"Register an account on our Web site to get exciting offers!\""
+				});
+	}
+}
