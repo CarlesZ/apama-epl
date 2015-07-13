@@ -11,5 +11,9 @@ Include a JAVA example that shows/explains how to send events to the Apama corre
 
 May-2015: New Apama Queries has been release. Queries offers: Scalable event storage, horizontal processing scalability and a graphical interface for business analyst. 
 
+June-2015: Adding an Epl example about how to call R v3.0.2 functions from Apama. So, your EPL code can do call-out to the R statistics tool in order to provide predictive analytics functionality to Apama if needed. 
+
+R Version 3.0.2 for windows 
+
 Enjoy it!
 carlesz@yahoo.com

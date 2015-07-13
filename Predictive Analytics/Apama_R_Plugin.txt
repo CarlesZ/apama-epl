@@ -1,0 +1,328 @@
+//*****************************************************************************
+
+// Title:         InterestRatePrediction
+
+// Description:   InterestRatePrediction description
+
+//*****************************************************************************
+
+package com.apama.sample;
+
+monitor InterestRatePrediction {
+
+	
+
+	import "RPlugin" as rplugin;
+
+	
+
+	integer sessionid;
+
+	integer previous_sessionid := 0;
+
+	
+
+	action onload() {
+
+		
+
+		on all wait(20.0) {
+
+			
+
+			sessionid := integer.getUnique();
+
+			
+
+			string session := "interestrate"+sessionid.toString();
+
+			rplugin.createSession(session, "");
+
+			string returnstring := rplugin.echo(session, "hello world");
+
+			log "Returned String = "+returnstring;
+
+			// Create a float array of years
+
+			sequence<float> years := [2000.0, 2001.0, 2002.0, 2003.0, 2004.0];
+
+			rplugin.assign(session, "year", years);
+
+			// Create a float array of rates
+
+			sequence<float> rates := [9.34, 8.5, 7.62, 6.93, 6.60];
+
+			
+
+			// adjust the rate by the sequence id just to prove that we are not mixing up data
+
+			integer i := 0;
+
+			while (i < rates.size()) {
+
+				rates[i] := rates[i] + sessionid.toFloat();
+
+				i := i + 1;
+
+			}
+
+			
+
+			rplugin.assign(session, "rate", rates);
+
+			rplugin.execute(session, "yearlyrates <- data.frame(year, rate)");
+
+			rplugin.execute(session, "Model <- lm(rate ~ year, data=yearlyrates)");
+
+			sequence<float> predictedrate := rplugin.evaluateAsFloatArray(session, "Model$coefficients[[2]]*2015+Model$coefficients[[1]]");
+
+			log "Predicted Rate ("+session+") : "+predictedrate[0].toString();
+
+			
+
+			if (previous_sessionid != 0) then {
+
+				previous_sessionid := sessionid - 1;
+
+				string previous_session := "interestrate"+previous_sessionid.toString();
+
+				sequence<float> predictedrate := rplugin.evaluateAsFloatArray(previous_session, "Model$coefficients[[2]]*2015+Model$coefficients[[1]]");
+
+				log "Predicted Rate from Previous ("+previous_session+") : "+predictedrate[0].toString();
+
+			} else {
+
+				previous_sessionid := sessionid;
+
+			}
+
+		}
+
+		
+
+	}
+
+	
+
+}
+
+
+//*****************************************************************************
+
+//Title:         InterestRatePrediction
+
+//Description:   InterestRatePrediction description
+
+//Dependencies:  None
+
+//Author:        MROT
+
+//*****************************************************************************
+
+package com.apama.sample;
+
+monitor SimpleSamples {
+
+	import "RPlugin" as rplugin;
+
+	integer sessionid;
+
+	action onload() {
+
+		sessionid := integer.getUnique();
+
+		string session := "SAMPLES_"+sessionid.toString();
+
+		rplugin.createSession(session, "");
+
+		float f := rplugin.evaluateAsFloat(session, "1.2");	
+
+		log "Result -> " + f.toString();
+
+		sequence<float> fa := rplugin.evaluateAsFloatArray(session, "c(1.2, 1.4, 1.5)");		
+
+		log "Result -> " + fa.toString();
+
+		string s := rplugin.evaluateAsString(session, "\"Hello\"");
+
+		log "Result -> " + s.toString();
+
+		sequence<string> sa := rplugin.evaluateAsStringArray(session, "c(\"My\", \"Name\", \"Is\", \"Jan\")");
+
+		log "Result -> " + sa.toString();
+
+		integer i := rplugin.evaluateAsInteger(session, "10");
+
+		log "Result -> " + i.toString();
+
+		sequence<integer> ia := rplugin.evaluateAsIntegerArray(session, "c(10, 20, 30, 40, 50)");
+
+		log "Result -> " + ia.toString();
+
+	}
+
+	
+
+}
+
+
+Apama R Plugin
+
+--------------
+
+This is a demonstration of how Apama can be used to operationalize an "R" application by turning it from a batch oriented, statistical
+
+analysis tool to a real-time, continuous analysis tool.  In the "R" language, there is a concept of a "vector", which is a sequence of float value. 
+
+The "vector" is the core data type for performing many analysis operations, and also can be used to create higher level constructs such 
+
+as matricies.  With Apama, you can feed data continuously to create a "Continuous Vector" and call "R" functions on the moving data, which
+
+allows for more responsive analysis and leads the way to behavioral learning.
+
+  
+
+The following installation describes the steps required to configure your Apama Studio environment to accommodate the R Plugin for Apama EPL projects.
+
+REQUIREMENTS
+
+------------
+
+Apama 5.1+ - Apama Studio
+
+R Version 3.0.2 for windows (any 3.0+ version likely fine)
+
+	-> http://www.r-project.org/
+
+rJava (contains JRI which is bridge between Java and "R")
+
+	-> http://www.rforge.net/rJava/files/
+
+INSTALL
+
+-------
+
+ 1) Unzip the demo anywhere sensible (optional)
+
+ 
+
+ 2) Install "R"
+
+  	-> http://www.r-project.org/
+
+  	
+
+ 3) Install "rJava"
+
+ 	-> -> http://www.rforge.net/rJava/files/
+
+	NOTE:  If you are on windows the correct rJava is this:
+
+	R 3.0, Windows binary: rJava_0.9-5.zip  (739.0kb, updated: Fri May 9 11:28:26 2014)
+
+	It may be a different version by the time you install it but the key is not to try and install the "tar.gz"
+
+	
+
+ 4) Set up your system path variable to include the necessary native libraries for both R and rJava.  For a global configuration you can do this directly in your OS environment, or in Studio's launch configuration.  
+
+ 	We will describe here the global approach.
+
+ 
+
+ 	a) First define R_HOME and RJAVA_HOME variables, and then use these to configure your environment system path.
+
+ 		Open 'System Properties' -> Advanced -> 'Environment Variables'
+
+ 		Create variable R_HOME and RJAVA_HOME.  
+
+ 			E.g. 
+
+ 				R_HOME=C:\Program Files\R\R-3.0.2
+
+ 				RJAVA_HOME=C:\Program Files\R\rJava_0.9-5\rJava
+
+ 	b) Edit the 'PATH' variable to include the native library directories for both R and rJava.
+
+ 			E.g. for 64bit system (you should not be running anything other than 64bit anyway ;-)
+
+ 				PATH=%R_HOME%\bin\x64;%RJAVA_HOME%\jri\x64;...
+
+ 	NOTE: If you had Apama Studio open at this point, you'll need to re-launch it for it to pick up the new environment variables. 
+
+CONFIGURE STUDIO
+
+----------------
+
+At this point we need to configure the Studio's classpath to include the rJava library jars.  This is necessary to both build and run the projects within Studio which require the rJava EPL plugin.  
+
+ 5) Go to your classpath variables in Studio: Windows -> Java -> 'Build Path' -> 'Classpath Variables'.  Define RJAVA_HOME to point to the folder where you installed/downloaded rJava.
+
+ 	E.g. RJAVA_HOME=C:\Program Files\R\rJava_0.9-5\rJava
+
+ 	
+
+IMPORT PROJECT
+
+--------------
+
+ 6) Import the project into your workspace: File -> Import ... -> General -> Existing Projects into Workspace.
+
+ 	Chose the install directory and select the "RPlugin" project to import.
+
+ 	The project should now be available in your workspace and selectable in your project navigator view.  
+
+ 	The project should also be free of any errors, otherwise check the previous steps.
+
+ 	
+
+ 
+
+Testing Simple Scripts
+
+----------------------
+
+This project contains two launch configurations for running the two sample scripts included in the project.
+
+1.  Test the "InterestRatePrediction.mon":  This is a very simple example using the synchronous version of the Java plugin.  It calculates
+
+a future interest rate by using a linear regression between interest rate and year.  
+
+	To run, select "Run -> Run Configurations ... -> 'RPlugin - Sample - InterestRatePrediction'" or from the drop-down in your run favorites button.  
+
+2.  Test the "InterestRatePredictionService.mon":  This is an asynchronous version of the service which accomplishes the same thing.  
+
+The asynchronous version is more scalable because it runs the "R" plugin in a separate context, and all operations are invoked asynchronously.
+
+	To run, select "Run -> Run Configurations ... -> 'RPlugin - Sample - InterestRatePredictionService'" or from the drop-down in your run favorites button.  
+
+		
+
+NOTE: if you didn't specify the global R_HOME and RJAVA_HOME variables in step 4 in the installation procedure, you can also include the native R and rJava libraries in each launch configuration of your project.
+
+To accomplish this, select 	"Run -> Run Configurations ... -> 'Apama Application'" and choose your launch configuration.  Select the 'Environment' tab and add the "path" environment with the paths as described in (4).
+
+Hey, what's that "rwork" directory?
+
+-----------------------------------
+
+By default "R" is not multi-user, multi-threaded.  Apama can make it that way, the plugin logic helps with this.  The plugin logic uses the 
+
+"sessionid" to "context switch" between multiple "R" sessions by loading and saving the workspace.  The appropriateness of this for an actual 
+
+deployment, but the use of "R" may be better suited to calling it at intervals anyway.  For example, this specific example calls "R" at each
+
+monitoring interval to predict a sequence of values between now and the next interval. If you are using "R" in this fashion, performance should
+
+be fine for this type of use case.  High speed, low latency access may not be a good use for this implementation.  If this is a requirement,
+
+you should consider the native C/C++ version of this plugin, or consider implementing whatever math you require in native EPL for the fastest
+
+execution time.
+
+Notice also that the "work" data are standard "R" workspaces.  You could load these into an "R" session after stopping Apama to play with the 
+
+workspace, dump variables, or whatever you need to do.
+
+
+
