@@ -16,4 +16,6 @@ June-2015: Adding an Epl example about how to call R v3.0.2 functions from Apama
 R Version 3.0.2 for windows 
 
 Enjoy it!
+Carles Zaragoza
+www.linkedin.com/in/carleszaragoza
 carlesz@yahoo.com
