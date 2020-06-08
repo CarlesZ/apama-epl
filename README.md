@@ -18,4 +18,4 @@ R Version 3.0.2 for windows
 Enjoy it!
 Carles Zaragoza
 www.linkedin.com/in/carleszaragoza
-carlesz@yahoo.com
+carlesz at yahoo.com
