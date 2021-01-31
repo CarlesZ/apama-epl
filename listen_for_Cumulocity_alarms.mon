@@ -1,0 +1,51 @@
+/** Basic event definitions for working with Cumulocity IoT */
+using com.apama.cumulocity.ManagedObject;
+using com.apama.cumulocity.FindManagedObject;
+using com.apama.cumulocity.FindManagedObjectResponse;
+using com.apama.cumulocity.FindManagedObjectResponseAck;
+
+using com.apama.cumulocity.Measurement;
+using com.apama.cumulocity.MeasurementValue;
+using com.apama.cumulocity.FindMeasurement;
+using com.apama.cumulocity.FindMeasurementResponse;
+using com.apama.cumulocity.FindMeasurementResponseAck;
+
+using com.apama.cumulocity.Alarm;
+using com.apama.cumulocity.FindAlarm;
+using com.apama.cumulocity.FindAlarmResponse;
+using com.apama.cumulocity.FindAlarmResponseAck;
+
+using com.apama.cumulocity.Event;
+using com.apama.cumulocity.FindEvent;
+using com.apama.cumulocity.FindEventResponse;
+using com.apama.cumulocity.FindEventResponseAck;
+
+using com.apama.cumulocity.Operation;
+using com.apama.cumulocity.FindOperation;
+using com.apama.cumulocity.FindOperationResponse;
+using com.apama.cumulocity.FindOperationResponseAck;
+
+using com.apama.cumulocity.ObjectCommitted;
+using com.apama.cumulocity.ObjectCommitFailed;
+using com.apama.cumulocity.MeasurementFragment;
+
+/** Miscellaneous utilities */
+using com.apama.cumulocity.Util;
+using com.apama.util.AnyExtractor;
+
+monitor MySampleMonitor {
+   action onload() {
+        //Subscribe to measurement Channel
+        monitor.subscribe(Alarm.SUBSCRIBE_CHANNEL);
+
+        //Listen for Alarm for specific type and severity
+        on all Alarm(type = "c8y_Difference2Alarm",severity = "CRITICAL",status = "ACTIVE") as m {
+            log "The Received Smart Rule Alarm: " + m.toString();
+
+        //Publish the events to Event channel
+            send Event("", "c8y_LocationEvent", m.source, currentTime, "Location Update", new dictionary<string,any>) to Event.CHANNEL;
+            log "Location-Event from Apama sent to C8Y";
+
+        }
+    }
+}
