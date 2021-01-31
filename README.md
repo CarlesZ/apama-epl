@@ -15,6 +15,8 @@ June-2015: Adding an Epl example about how to call R v3.0.2 functions from Apama
 
 R Version 3.0.2 for windows 
 
+2020: Adding monitors for listining Cumulocity.com alarms and localization events
+
 Enjoy it!
 Carles Zaragoza
 www.linkedin.com/in/carleszaragoza
