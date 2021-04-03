@@ -16,6 +16,7 @@ June-2015: Adding an Epl example about how to call R v3.0.2 functions from Apama
 R Version 3.0.2 for windows 
 
 2020: Adding monitors for listining Cumulocity.com alarms and localization events
+2021: Adding Apama monitors for Cumulocity to calculate batteries total storage
 
 Enjoy it!
 Carles Zaragoza
