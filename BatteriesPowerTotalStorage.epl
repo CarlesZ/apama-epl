@@ -1,0 +1,74 @@
+using com.apama.aggregates.sum;
+using com.apama.aggregates.avg;
+using com.apama.aggregates.last;
+using com.apama.cumulocity.Measurement;
+using com.apama.cumulocity.MeasurementValue;
+
+/** 
+	This monitor is responsible for calculating the total
+	power stored in the set of batteries 
+	The measurement type is called battery_measurement, change to match your specs...
+*/
+event AGGBattery {
+	string unit;
+	float avg;
+	float sum;
+}
+
+monitor BatteriesTotalStorage {
+	
+	constant float SEC_IN_DAY := 86400.0; // 60 * 60 * 24
+	constant float SEC_IN_HOUR := 3600.0; // 60 * 60 
+	constant string BATTERY_PARENT := "5753"; 
+	
+	listener average;
+	
+	action onload() {
+		monitor.subscribe(Measurement.CHANNEL);
+		
+		dictionary<string, Measurement> lastBatteryMeasurements := new dictionary<string, Measurement>;
+  	    
+		on all Measurement(type = "battery_measurement") as measurement {
+		 lastBatteryMeasurements[measurement.source] := measurement;
+		}
+		
+		on all wait(480.0) {
+		 float totalPowerProduction := 0.0;
+		 Measurement measurement;
+		 string unit := "";
+
+		 for measurement in lastBatteryMeasurements.values() {
+			 totalPowerProduction := totalPowerProduction + measurement.measurements["c8y_PowerMeasurement"]["power"].value;
+			 unit := measurement.measurements["c8y_PowerMeasurement"]["power"].unit;
+		 }
+		 
+		 lastBatteryMeasurements.clear();
+		 createMeasurement(BATTERY_PARENT, "sag_TotalPowerMeasurementBatteries", "c8y_PowerMeasurement", "power", unit, totalPowerProduction);
+		}
+		 
+		 
+		average := from t in all Measurement(type="sag_TotalPowerMeasurementBatteries")
+		within SEC_IN_DAY
+		select AGGBattery(last(t.measurements["c8y_PowerMeasurement"]["power"].unit), avg(t.measurements["c8y_PowerMeasurement"]["power"].value),  sum(t.measurements["c8y_PowerMeasurement"]["power"].value))
+		as av{
+			createMeasurement(BATTERY_PARENT,"sag_DailyAverageBatteries", "c8y_PowerDailyAvgMeasurement", "power", av.unit, av.avg);
+		}	
+		 
+		 
+
+    }
+	
+	action createMeasurement(string source, string type, string fragment, string series, string unit, float value){
+		Measurement measurement := new Measurement;
+		measurement.type := type;
+		measurement.source := source;
+		measurement.time := currentTime;
+
+		MeasurementValue measurementValue := new MeasurementValue;
+		measurementValue.value := value;
+		measurementValue.unit := unit;
+		measurement.measurements.add(fragment, { series: measurementValue });
+		
+		send measurement to Measurement.CREATE_CHANNEL;
+	}
+}
